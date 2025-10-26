@@ -6,7 +6,7 @@ echo "=== FFmpeg RTSP Relay with Environment Configuration ==="
 # 環境変数の検証
 required_vars=(
     "INPUT_RTSP_HOST"
-    "INPUT_RTSP_PORT" 
+    "INPUT_RTSP_PORT"
     "INPUT_RTSP_PATH"
     "OUTPUT_RTSP_HOST"
     "OUTPUT_RTSP_PORT"
@@ -31,6 +31,9 @@ THREAD_QUEUE_SIZE="${THREAD_QUEUE_SIZE:-2048}"
 INPUT_RTSP_TRANSPORT="${INPUT_RTSP_TRANSPORT:-udp_multicast}"
 OUTPUT_RTSP_TRANSPORT="${OUTPUT_RTSP_TRANSPORT:-tcp}"
 LOG_LEVEL="${LOG_LEVEL:-warning}"
+# スナップショット設定 (1 秒に 1 枚をデフォルト)
+SNAP_FPS="${SNAP_FPS:-1}"
+SNAP_DIR="${SNAP_DIR:-/var/www/snapshots}"
 
 echo "Configuration:"
 echo "  Input RTSP: $INPUT_RTSP_URL"
@@ -38,8 +41,13 @@ echo "  Output RTSP: $OUTPUT_RTSP_URL"
 echo "  Buffer Size: $BUFFER_SIZE"
 echo "  Max Delay: $MAX_DELAY"
 echo "  Thread Queue Size: $THREAD_QUEUE_SIZE"
+echo "  Snapshot dir: $SNAP_DIR (fps=$SNAP_FPS)"
 
 sleep 15
+
+# スナップショット用ディレクトリを作成し、バックグラウンドで簡易スナップショットを生成
+mkdir -p "$SNAP_DIR"
+
 
 echo "Starting FFmpeg relay..."
 exec ffmpeg -hide_banner -loglevel "$LOG_LEVEL" \
@@ -60,4 +68,9 @@ exec ffmpeg -hide_banner -loglevel "$LOG_LEVEL" \
     -max_interleave_delta 2000000 \
     -f rtsp \
     -rtsp_transport "$OUTPUT_RTSP_TRANSPORT" \
-    "$OUTPUT_RTSP_URL"
+    "$OUTPUT_RTSP_URL" \
+    -vf "fps=$SNAP_FPS" \
+    -update 1 -y "$SNAP_DIR/$OUTPUT_RTSP_PATH.jpg"
+
+
+

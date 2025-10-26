@@ -15,6 +15,23 @@ services:
       - MTX_RTSPTRANSPORTS=tcp  # RTSPトランスポートをTCPに設定
     restart: unless-stopped
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx-server
+    hostname: nginx
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+    volumes:
+      # Do not mount an empty host conf.d (hides the image's default config).
+      # If you need custom nginx configs, place them under ./nginx/conf.d and
+      # ensure files exist before starting the container.
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./snapshots:/usr/share/nginx/html/snapshots:ro
+    depends_on:
+      - mediamtx
+    restart: unless-stopped
+
   ffmpeg-relay-1:
     build: ./ffmpeg-relay
     container_name: ffmpeg-relay-1
@@ -39,6 +56,8 @@ services:
       nofile: 65536
     mem_limit: ${MEMORY_LIMIT}
     shm_size: ${SHM_SIZE}
+    volumes:
+      - ./snapshots:/var/www/snapshots:rw
 
 #  ffmpeg-relay-2:
 #    build: ./ffmpeg-relay
@@ -64,6 +83,8 @@ services:
 #      nofile: 65536
 #    mem_limit: ${MEMORY_LIMIT}
 #    shm_size: ${SHM_SIZE}
+#    volumes:
+#      - ./snapshots:/var/www/snapshots:rw
 
 
 
