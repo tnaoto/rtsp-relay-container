@@ -28,7 +28,21 @@ OUTPUT_RTSP_URL="rtsp://${OUTPUT_RTSP_HOST}:${OUTPUT_RTSP_PORT}/${OUTPUT_RTSP_PA
 BUFFER_SIZE="${BUFFER_SIZE:-256M}"
 MAX_DELAY="${MAX_DELAY:-60000000}"
 THREAD_QUEUE_SIZE="${THREAD_QUEUE_SIZE:-2048}"
-INPUT_RTSP_TRANSPORT="${INPUT_RTSP_TRANSPORT:-udp_multicast}"
+# RTSP transport: prefer explicit environment value. If not provided,
+# auto-detect: treat addresses in 224.0.0.0/4 as multicast and use
+# udp_multicast; otherwise use tcp (unicast-friendly and more reliable
+# across NAT/firewalls).
+if [ -n "${INPUT_RTSP_TRANSPORT}" ]; then
+    : # use provided value
+else
+    # get first octet of INPUT_RTSP_HOST (if IPv4 dotted-decimal)
+    first_octet=$(echo "${INPUT_RTSP_HOST}" | cut -d. -f1 2>/dev/null || echo "")
+    if [[ "$first_octet" =~ ^[0-9]+$ ]] && [ "$first_octet" -ge 224 ] && [ "$first_octet" -le 239 ]; then
+        INPUT_RTSP_TRANSPORT="udp_multicast"
+    else
+        INPUT_RTSP_TRANSPORT="tcp"
+    fi
+fi
 OUTPUT_RTSP_TRANSPORT="${OUTPUT_RTSP_TRANSPORT:-tcp}"
 LOG_LEVEL="${LOG_LEVEL:-warning}"
 # スナップショット設定 (1 秒に 1 枚をデフォルト)

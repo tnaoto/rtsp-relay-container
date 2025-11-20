@@ -39,6 +39,7 @@ services:
     depends_on:
       - mediamtx
     environment:
+      - INPUT_RTSP_TRANSPORT=${RELAY1_INPUT_RTSP_TRANSPORT}
       - INPUT_RTSP_HOST=${RELAY1_INPUT_HOST}
       - INPUT_RTSP_PORT=${RELAY1_INPUT_PORT}
       - INPUT_RTSP_PATH=${RELAY1_INPUT_PATH}
@@ -66,6 +67,7 @@ services:
 #    depends_on:
 #      - mediamtx
 #    environment:
+#      - INPUT_RTSP_TRANSPORT=${RELAY2_INPUT_RTSP_TRANSPORT}
 #      - INPUT_RTSP_HOST=${RELAY2_INPUT_HOST}
 #      - INPUT_RTSP_PORT=${RELAY2_INPUT_PORT}
 #      - INPUT_RTSP_PATH=${RELAY2_INPUT_PATH}
