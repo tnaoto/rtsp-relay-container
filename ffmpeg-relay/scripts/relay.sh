@@ -24,10 +24,14 @@ done
 INPUT_RTSP_URL="rtsp://${INPUT_RTSP_HOST}:${INPUT_RTSP_PORT}/${INPUT_RTSP_PATH}"
 OUTPUT_RTSP_URL="rtsp://${OUTPUT_RTSP_HOST}:${OUTPUT_RTSP_PORT}/${OUTPUT_RTSP_PATH}"
 
-# デフォルト値の設定
-BUFFER_SIZE="${BUFFER_SIZE:-256M}"
-MAX_DELAY="${MAX_DELAY:-60000000}"
-THREAD_QUEUE_SIZE="${THREAD_QUEUE_SIZE:-2048}"
+# オプションのデフォルト値設定
+BUFFER_SIZE="${BUFFER_SIZE:-26214400}"  # 25MB
+MAX_DELAY="${MAX_DELAY:-5000000}"       # 5秒
+THREAD_QUEUE_SIZE="${THREAD_QUEUE_SIZE:-4096}"
+REORDER_QUEUE_SIZE="${REORDER_QUEUE_SIZE:-4096}"
+PROBE_SIZE="${PROBE_SIZE:-1000000}"     # 1MB
+
+
 # RTSP transport: prefer explicit environment value. If not provided,
 # auto-detect: treat addresses in 224.0.0.0/4 as multicast and use
 # udp_multicast; otherwise use tcp (unicast-friendly and more reliable
@@ -66,20 +70,18 @@ mkdir -p "$SNAP_DIR"
 echo "Starting FFmpeg relay..."
 exec ffmpeg -hide_banner -loglevel "$LOG_LEVEL" \
     -thread_queue_size "$THREAD_QUEUE_SIZE" \
+    -probesize "$PROBE_SIZE" \
     -rtsp_transport "$INPUT_RTSP_TRANSPORT" \
     -buffer_size "$BUFFER_SIZE" \
-    -max_delay "$MAX_DELAY" \
-    -reorder_queue_size "${REORDER_QUEUE_SIZE:-2000}" \
+    -reorder_queue_size "$REORDER_QUEUE_SIZE" \
+    -i "$INPUT_RTSP_URL" \
+    -map 0:v \
+    -an \
+    -c copy \
     -fflags +genpts+igndts+flush_packets \
     -avoid_negative_ts make_zero \
-    -probesize "${PROBE_SIZE:-64M}" \
-    -analyzeduration "${ANALYZE_DURATION:-20M}" \
-    -an \
-    -i "$INPUT_RTSP_URL" \
-    -c copy \
-    -copyts \
     -start_at_zero \
-    -max_interleave_delta 2000000 \
+    -max_delay "$MAX_DELAY" \
     -f rtsp \
     -rtsp_transport "$OUTPUT_RTSP_TRANSPORT" \
     "$OUTPUT_RTSP_URL" \
