@@ -6,15 +6,17 @@ services:
     hostname: mediamtx
     ports:
       - "8554:8554"      # RTSP
+      - "8554:8554/UDP"      # RTSP/UDP
       - "1935:1935"      # RTMP
       - "8888:8888"      # HLS/HTTP
       - "8889:8889"      # WebRTC
       - "8890:8890/udp"  # WebRTC UDP
       - "8189:8189/udp"  # WebRTC UDP
-    environment:
-      - MTX_RTSPTRANSPORTS=tcp  # RTSPトランスポートをTCPに設定
+    #environment:
+    #  - MTX_RTSPTRANSPORTS=tcp  # RTSPトランスポートをTCPに設定
     restart: unless-stopped
-
+    network_mode: host  # ホストネットワークを使用
+    
   nginx:
     image: nginx:latest
     container_name: nginx-server
